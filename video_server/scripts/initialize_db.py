@@ -12,13 +12,13 @@ def setup_models(dbsession):
     Add or update models / fixtures in the database.
 
     """
-    user1 = models.User(
+    user1 = models.UserModel(
         username="strife", mobile_token="0c51086c-45dd-419a-b595-231fd04c6d34"
     )
     user1.set_password("C70ud")
     dbsession.add(user1)
 
-    user2 = models.User(
+    user2 = models.UserModel(
         username="tifa", mobile_token="39a26337-7287-46c6-bb92-7e2e2bd331bb"
     )
     user2.set_password("l0ckH@rt")
