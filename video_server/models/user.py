@@ -1,13 +1,14 @@
 import bcrypt
-from sqlalchemy import Column, Integer, Text, DateTime
+from sqlalchemy import Column, Text, DateTime
 from sqlalchemy.sql.expression import func
+from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import UUID
 import uuid
 
 from .meta import Base
 
 
-class UserModel(Base):
+class User(Base):
     """A user model"""
 
     __tablename__ = "users"
@@ -24,6 +25,7 @@ class UserModel(Base):
         onupdate=func.now(),
         nullable=False,
     )
+    rooms = relationship("Room", secondary="room_memberships", back_populates="users")
 
     def set_password(self, pw):
         pwhash = bcrypt.hashpw(pw.encode("utf8"), bcrypt.gensalt())

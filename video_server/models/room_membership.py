@@ -1,25 +1,26 @@
-from sqlalchemy import Column, Integer, Text, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, DateTime, ForeignKey
 from sqlalchemy.sql.expression import func
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import relationship
 import uuid
 
 from .meta import Base
 
 
-class Room(Base):
-    """A room model"""
+class RoomMembership(Base):
+    """An association table for rooms and users"""
 
-    __tablename__ = "rooms"
+    __tablename__ = "room_memberships"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    name = Column(Text, nullable=False)
-    host_id = Column(
+    user_id = Column(
         UUID(as_uuid=True),
-        ForeignKey("users.id", onupdate="CASCADE", ondelete="CASCADE"),
+        ForeignKey("users.id", onupdate="CASCADE", ondelete="CASCADE",),
         nullable=False,
     )
-    host = relationship("User")
-    capacity = Column(Integer, default=5)
+    room_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("rooms.id", onupdate="CASCADE", ondelete="CASCADE",),
+        nullable=False,
+    )
     created_at = Column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
@@ -29,4 +30,3 @@ class Room(Base):
         onupdate=func.now(),
         nullable=False,
     )
-    users = relationship("User", secondary="room_memberships", back_populates="rooms")
