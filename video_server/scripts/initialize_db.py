@@ -12,17 +12,14 @@ def setup_models(dbsession):
     Add or update models / fixtures in the database.
 
     """
-    user1 = models.UserModel(
-        username="strife", mobile_token="0c51086c-45dd-419a-b595-231fd04c6d34"
+    user3 = models.UserModel(
+        username="zack", mobile_token="0c51086c-45dd-419a-b595-231fd04c6d34"
     )
-    user1.set_password("C70ud")
-    dbsession.add(user1)
+    user3.set_password("C70ud")
+    dbsession.add(user3)
 
-    user2 = models.UserModel(
-        username="tifa", mobile_token="39a26337-7287-46c6-bb92-7e2e2bd331bb"
-    )
-    user2.set_password("l0ckH@rt")
-    dbsession.add(user2)
+    room1 = models.RoomModel(name="Midgar", host=user3, capacity=2)
+    dbsession.add(room1)
 
 
 def parse_args(argv):
