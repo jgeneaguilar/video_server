@@ -5,64 +5,6 @@ from sqlalchemy.exc import DBAPIError
 
 from .. import models
 
-# User public views
-@view_config(
-    route_name="users", request_method="GET", renderer="json",
-)
-def get_all_users(request):
-    """Retrieves all registered users"""
-    pass
-
-
-@view_config(
-    route_name="user", request_method="GET", renderer="json",
-)
-def get_user_by_username(request):
-    """Retrieves a user by its username"""
-    pass
-
-
-@view_config(
-    route_name="create_user", request_method="POST", renderer="json",
-)
-def create_user(request):
-    """Creates a new user and authenticates session"""
-    pass
-
-
-# User auth views
-@view_config(
-    route_name="change_password",
-    request_method="PUT",
-    renderer="json",
-    permission="auth",
-)
-def change_password(request):
-    """Changes an authenticated user's password"""
-    pass
-
-
-@view_config(
-    route_name="change_mobile_token",
-    request_method="PUT",
-    renderer="json",
-    permission="auth",
-)
-def change_mobile_token(request):
-    """Changes an authenticated user's mobile token"""
-    pass
-
-
-@view_config(
-    route_name="delete_user",
-    request_method="DELETE",
-    renderer="json",
-    permission="auth",
-)
-def delete_user(request):
-    """Deletes an authenticated user's account"""
-    pass
-
 
 # Room public views
 @view_config(
