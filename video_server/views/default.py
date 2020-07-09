@@ -7,7 +7,7 @@ from .. import models
 
 # User public views
 @view_config(
-    route_name="users", request_method="GET", renderer="json", permission="public"
+    route_name="users", request_method="GET", renderer="json",
 )
 def get_all_users(request):
     """Retrieves all registered users"""
@@ -15,7 +15,7 @@ def get_all_users(request):
 
 
 @view_config(
-    route_name="user", request_method="GET", renderer="json", permission="public"
+    route_name="user", request_method="GET", renderer="json",
 )
 def get_user_by_username(request):
     """Retrieves a user by its username"""
@@ -23,10 +23,7 @@ def get_user_by_username(request):
 
 
 @view_config(
-    route_name="create_user",
-    request_method="POST",
-    renderer="json",
-    permission="public",
+    route_name="create_user", request_method="POST", renderer="json",
 )
 def create_user(request):
     """Creates a new user and authenticates session"""
@@ -34,10 +31,7 @@ def create_user(request):
 
 
 @view_config(
-    route_name="authenticate",
-    request_method="POST",
-    renderer="json",
-    permission="public",
+    route_name="authenticate", request_method="POST", renderer="json",
 )
 def authenticate_session(request):
     """Authenticates the user by checking the username-password combination"""
@@ -80,10 +74,7 @@ def delete_user(request):
 
 # Room public views
 @view_config(
-    route_name="get_room_info",
-    request_method="GET",
-    renderer="json",
-    permission="public",
+    route_name="get_room_info", request_method="GET", renderer="json",
 )
 def get_room_info(request):
     """
@@ -96,10 +87,7 @@ def get_room_info(request):
 
 
 @view_config(
-    route_name="get_user_rooms",
-    request_method="GET",
-    renderer="json",
-    permission="public",
+    route_name="get_user_rooms", request_method="GET", renderer="json",
 )
 def get_rooms_by_username(request):
     """Retrieves a list of rooms a user is in"""
