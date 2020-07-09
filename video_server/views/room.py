@@ -1,10 +1,8 @@
 from pyramid.view import view_config
-from pyramid.response import Response
+from pyramid.httpexceptions import HTTPFound, HTTPNotFound, HTTPForbidden
 
-from sqlalchemy.exc import DBAPIError
-
-from .. import models
-
+from ..models import Room, RoomMembership, User
+from ..services import encoding
 
 # Room public views
 @view_config(
@@ -34,7 +32,15 @@ def get_rooms_by_username(request):
 )
 def create_room(request):
     """Creates a room for an authenticated user and set user as the host"""
-    pass
+    user_id = request.authenticated_userid
+    name = request.json_body.get("name")
+    capacity = request.json_body.get("capacity")  # 5 as default
+
+    session = request.dbsession
+    new_room = Room(name=name, capacity=capacity, host_id=user_id)
+    session.add(new_room)
+    session.flush()
+    return encoding.encode_room(new_room)
 
 
 @view_config(
@@ -62,19 +68,3 @@ def join_room(request):
 def leave_room(request):
     """Removes the user from the room"""
     pass
-
-
-db_err_msg = """\
-Pyramid is having a problem using your SQL database.  The problem
-might be caused by one of the following things:
-
-1.  You may need to initialize your database tables with `alembic`.
-    Check your README.txt for descriptions and try to run it.
-
-2.  Your database server may not be running.  Check that the
-    database server referred to by the "sqlalchemy.url" setting in
-    your "development.ini" file is running.
-
-After you fix the problem, please restart the Pyramid application to
-try it again.
-"""

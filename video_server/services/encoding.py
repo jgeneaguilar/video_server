@@ -11,3 +11,13 @@ def encode_response_token(obj, request):
         "token": request.create_jwt_token(user["id"], username=user["username"]),
     }
     return response
+
+
+def encode_room(obj):
+    _id = str(obj.id)
+    return {
+        "id": _id,
+        "name": obj.name,
+        "capacity": obj.capacity,
+        "host_id": obj.host_id,
+    }
