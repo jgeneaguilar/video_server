@@ -26,6 +26,7 @@ requires = [
     "psycopg2",
     "psycopg2-binary",
     "bcrypt",
+    "pyramid-jwt",
 ]
 
 tests_require = [

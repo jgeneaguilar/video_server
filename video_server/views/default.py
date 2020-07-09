@@ -30,14 +30,6 @@ def create_user(request):
     pass
 
 
-@view_config(
-    route_name="authenticate", request_method="POST", renderer="json",
-)
-def authenticate_session(request):
-    """Authenticates the user by checking the username-password combination"""
-    pass
-
-
 # User auth views
 @view_config(
     route_name="change_password",

@@ -5,7 +5,7 @@ def includeme(config):
     config.add_route("users", "/users")
     config.add_route("create_user", "/users/create")
     config.add_route("user", "/users/find/{username}")
-    config.add_route("authenticate", "/auth")
+    config.add_route("login", "/login")
 
     # User auth routes
     config.add_route("change_password", "/users/{user_id}/password")

@@ -1,38 +1,19 @@
-from pyramid.authentication import AuthTktAuthenticationPolicy
+import os
 from pyramid.authorization import ACLAuthorizationPolicy
-from pyramid.security import Authenticated, Everyone
-
-from .models import User
+from pyramid.security import Authenticated, Everyone, Allow
 
 
-class AuthenticationPolicy(AuthTktAuthenticationPolicy):
-    def authenticated_userid(self, request):
-        """Returns the authenticated userid or None"""
-        user = request.user
-        if user is not None:
-            return user.id
+class Root(object):
+    def __init__(self, request):
+        self.request = request
 
-        def effective_principals(self, request):
-            """Returns a list of effective principals derived from request"""
-            principals = [Everyone]
-            user = request.user
-            if user is not None:
-                principals.append(Authenticated)
-                principals.append(str(user.id))
-            return principals
-
-
-def get_user(request):
-    """Convers the unauthenticated_userid from the policy into a User object from the db"""
-    user_id = request.unauthenticated_userid
-    if user_id is not None:
-        user = request.dbsession.query(User).get(user_id)
-        return user
+    __acl__ = [(Allow, Authenticated, "auth")]
 
 
 def includeme(config):
-    settings = config.get_settings()
-    authn_policy = AuthenticationPolicy(settings["auth.secret"], hashalg="sha512",)
-    config.set_authentication_policy(authn_policy)
+    """Security-related configuration"""
+    auth_secret = os.environ["AUTH_SECRET"]
+    config.set_root_factory(Root)
     config.set_authorization_policy(ACLAuthorizationPolicy)
-    config.add_request_method(get_user, "user", reify=True)
+    config.include("pyramid_jwt")
+    config.set_jwt_authentication_policy(auth_secret, auth_type="Bearer")
