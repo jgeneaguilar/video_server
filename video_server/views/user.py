@@ -30,7 +30,15 @@ def get_user_by_username(request):
 )
 def create_user(request):
     """Creates a new user and authenticates session"""
-    pass
+    session = request.dbsession
+    username = request.json_body.get("username")
+    password = request.json_body.get("password")
+    mobile_token = request.json_body.get("mobile_token", "")
+
+    new_user = User(username=username, password=password, mobile_token=mobile_token)
+    session.add(new_user)
+    session.flush()
+    return encoding.encode_response_token(new_user, request)
 
 
 # User auth views

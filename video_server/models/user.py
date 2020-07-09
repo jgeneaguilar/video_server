@@ -27,6 +27,12 @@ class User(Base):
     )
     rooms = relationship("Room", secondary="room_memberships", back_populates="users")
 
+    def __init__(self, **kwargs):
+        if "password" in kwargs:
+            self.set_password(kwargs.pop("password"))
+        # map the rest of Column names to class attributes
+        super(User, self).__init__(**kwargs)
+
     def set_password(self, pw):
         pwhash = bcrypt.hashpw(pw.encode("utf8"), bcrypt.gensalt())
         self.password_hash = pwhash.decode("utf8")

@@ -1,16 +1,17 @@
 from pyramid.view import forbidden_view_config, view_config
+from pyramid.httpexceptions import HTTPUnauthorized
 
 from ..models import User
+from ..services import encoding
 
 
 def _authenticate_user(request):
-    username = request.json_body["username"]
-    password = request.json_body["password"]
+    username = request.json_body.get("username")
+    password = request.json_body.get("password")
     user = request.dbsession.query(User).filter_by(username=username).first()
 
     if user is not None and user.check_password(password):
-        user_dict = dict(id=str(user.id), username=user.username)
-        return user_dict
+        return user
     else:
         return None
 
@@ -23,13 +24,9 @@ def login(request):
     user = _authenticate_user(request)
 
     if user is not None:
-        return {
-            "result": "ok",
-            "username": user["username"],
-            "token": request.create_jwt_token(user["id"], username=user["username"]),
-        }
+        return encoding.encode_response_token(user, request)
     else:
-        return "Unauthorized"
+        raise HTTPUnauthorized()
 
 
 @forbidden_view_config()

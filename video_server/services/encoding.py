@@ -1,3 +1,13 @@
-def encode_user(object):
-    _id = str(object.id)
-    return {"id": _id, "username": object.username}
+def encode_user(obj):
+    _id = str(obj.id)
+    return {"id": _id, "username": obj.username}
+
+
+def encode_response_token(obj, request):
+    user = encode_user(obj)
+    response = {
+        "request": "ok",
+        **user,
+        "token": request.create_jwt_token(user["id"], username=user["username"]),
+    }
+    return response
