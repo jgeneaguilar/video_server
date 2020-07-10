@@ -120,4 +120,14 @@ def join_room(request):
 )
 def leave_room(request):
     """Removes the user from the room"""
-    pass
+    user_id = request.authenticated_userid
+    room_id = request.matchdict["room_id"]
+
+    session = request.dbsession
+    room_membership = session.query(RoomMembership).filter_by(room_id=room_id).first()
+
+    if room_membership is not None and user_id == str(room_membership.user_id):
+        session.delete(room_membership)
+        return "Success"
+    else:
+        raise exception_response(403)
