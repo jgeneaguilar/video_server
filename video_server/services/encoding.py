@@ -13,7 +13,7 @@ def encode_response_token(obj, request):
     return response
 
 
-def encode_room(obj):
+def encode_room(obj, **kwargs):
     _id = str(obj.id)
     host_id = str(obj.host_id)
     return {
@@ -21,4 +21,5 @@ def encode_room(obj):
         "name": obj.name,
         "capacity": obj.capacity,
         "host_id": host_id,
+        **kwargs,
     }

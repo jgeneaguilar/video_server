@@ -14,9 +14,28 @@ def get_room_info(request):
     Retrieves information about a room:
         - room name
         - host name
+        - capacity
         - list of members
     """
-    pass
+    room_id = request.matchdict["room_id"]
+    room = request.dbsession.query(Room).filter(Room.id == room_id).first()
+
+    if room is not None:
+        members = [encoding.encode_user(user) for user in room.users]
+        room_info = encoding.encode_room(room, members=members)
+
+        return room_info
+    else:
+        raise exception_response(404)
+
+
+# members = [
+#        str(i[0])
+#        for i in session.query(User.id)
+#        .join(RoomMembership)
+#        .filter(RoomMembership.room_id == room_id)
+#        .all()
+#    ]
 
 
 @view_config(
