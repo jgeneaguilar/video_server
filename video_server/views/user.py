@@ -62,14 +62,16 @@ def update_user(request):
 
     user = request.dbsession.query(User).filter_by(id=user_id).first()
 
-    if user is not None:
-        if password is not None:
-            user.set_password(password)
-        if mobile_token is not None:
-            user.mobile_token = mobile_token
-        return "Success"
-    else:
+    if user is None:
         raise exception_response(404)
+    if password is not None and mobile_token is not None:
+        # check if password param is not the same
+        if not user.check_password(password):
+            user.set_password(password)
+        else:
+            raise exception_response(400)
+        user.mobile_token = mobile_token
+        return "Success"
 
 
 @view_config(
