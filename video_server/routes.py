@@ -1,6 +1,4 @@
 def includeme(config):
-    config.add_static_view("static", "static", cache_max_age=3600)
-
     # User public routes
     config.add_route("users", "/users")
     config.add_route("create_user", "/users/create")
@@ -8,9 +6,9 @@ def includeme(config):
     config.add_route("login", "/login")
 
     # User auth routes
-    config.add_route("change_password", "/users/{user_id}/password")
-    config.add_route("change_mobile_token", "/users/{user_id}/mobile_token")
-    config.add_route("delete_user", "/users/{user_id}/delete")
+    config.add_route("change_password", "/users/me/password")
+    config.add_route("change_mobile_token", "/users/me/mobile_token")
+    config.add_route("delete_user", "/users/me/delete")
 
     # Room public routes
     config.add_route("get_room_info", "/rooms/info/{room_id}")

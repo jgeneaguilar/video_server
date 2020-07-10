@@ -1,4 +1,5 @@
 from pyramid.view import view_config
+from pyramid.httpexceptions import exception_response
 
 from ..models import User
 from ..services import encoding
@@ -72,4 +73,12 @@ def change_mobile_token(request):
 )
 def delete_user(request):
     """Deletes an authenticated user's account"""
-    pass
+    user_id = request.authenticated_userid
+
+    session = request.dbsession
+    user = session.query(User).filter_by(id=user_id).first()
+    if user is not None:
+        session.delete(user)
+        return "Success"
+    else:
+        raise exception_response(404)
