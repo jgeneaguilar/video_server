@@ -6,8 +6,7 @@ def includeme(config):
     config.add_route("login", "/login")
 
     # User auth routes
-    config.add_route("change_password", "/users/me/password")
-    config.add_route("change_mobile_token", "/users/me/mobile_token")
+    config.add_route("update_user", "/users/me/update")
     config.add_route("delete_user", "/users/me/delete")
 
     # Room public routes

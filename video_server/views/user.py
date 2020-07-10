@@ -44,25 +44,32 @@ def create_user(request):
 
 # User auth views
 @view_config(
-    route_name="change_password",
+    route_name="update_user",
     request_method="PATCH",
     renderer="json",
     permission="auth",
 )
-def change_password(request):
-    """Changes an authenticated user's password"""
-    pass
+def update_user(request):
+    """
+        Changes an authenticated user's password and/or mobile_token
+        params:
+            password: string
+            mobile_token: string (optional)
+    """
+    user_id = request.authenticated_userid
+    password = request.json_body.get("password")
+    mobile_token = request.json_body.get("mobile_token")
 
+    user = request.dbsession.query(User).filter_by(id=user_id).first()
 
-@view_config(
-    route_name="change_mobile_token",
-    request_method="PATCH",
-    renderer="json",
-    permission="auth",
-)
-def change_mobile_token(request):
-    """Changes an authenticated user's mobile token"""
-    pass
+    if user is not None:
+        if password is not None:
+            user.set_password(password)
+        if mobile_token is not None:
+            user.mobile_token = mobile_token
+        return "Success"
+    else:
+        raise exception_response(404)
 
 
 @view_config(
