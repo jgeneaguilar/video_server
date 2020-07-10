@@ -1,5 +1,5 @@
 from pyramid.view import forbidden_view_config, view_config
-from pyramid.httpexceptions import HTTPUnauthorized
+from pyramid.httpexceptions import HTTPUnauthorized, exception_response
 
 from ..models import User
 from ..services import encoding
@@ -27,8 +27,3 @@ def login(request):
         return encoding.encode_response_token(user, request)
     else:
         raise HTTPUnauthorized()
-
-
-@forbidden_view_config()
-def forbidden_view(request):
-    return "Unauthorized"

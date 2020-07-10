@@ -44,7 +44,7 @@ def create_user(request):
 # User auth views
 @view_config(
     route_name="change_password",
-    request_method="PUT",
+    request_method="PATCH",
     renderer="json",
     permission="auth",
 )
@@ -55,7 +55,7 @@ def change_password(request):
 
 @view_config(
     route_name="change_mobile_token",
-    request_method="PUT",
+    request_method="PATCH",
     renderer="json",
     permission="auth",
 )
