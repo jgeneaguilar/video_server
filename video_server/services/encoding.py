@@ -15,9 +15,10 @@ def encode_response_token(obj, request):
 
 def encode_room(obj):
     _id = str(obj.id)
+    host_id = str(obj.host_id)
     return {
         "id": _id,
         "name": obj.name,
         "capacity": obj.capacity,
-        "host_id": obj.host_id,
+        "host_id": host_id,
     }

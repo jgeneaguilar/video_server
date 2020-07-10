@@ -1,5 +1,6 @@
 from pyramid.view import view_config
 from pyramid.httpexceptions import HTTPFound, HTTPNotFound, HTTPForbidden
+from sqlalchemy import func
 
 from ..models import Room, RoomMembership, User
 from ..services import encoding
@@ -40,6 +41,12 @@ def create_room(request):
     new_room = Room(name=name, capacity=capacity, host_id=user_id)
     session.add(new_room)
     session.flush()
+
+    # add host as member
+    new_member = RoomMembership(user_id=user_id, room_id=new_room.id)
+    session.add(new_member)
+    session.flush()
+
     return encoding.encode_room(new_room)
 
 
@@ -55,8 +62,32 @@ def change_host(request):
     route_name="join_room", request_method="POST", renderer="json", permission="auth",
 )
 def join_room(request):
-    """Enables the user to join a room if still within room capacity"""
-    pass
+    """Enables the user to join a room if still within room capacity and user is not already a member"""
+    user_id = request.authenticated_userid
+    room_id = request.matchdict["room_id"]
+
+    session = request.dbsession
+    members = [
+        str(i[0])
+        for i in session.query(User.id)
+        .join(RoomMembership)
+        .filter(RoomMembership.room_id == room_id)
+        .all()
+    ]
+    room_capacity = session.query(Room.capacity).filter_by(id=room_id).scalar()
+
+    if user_id not in members and len(members) < room_capacity:
+        new_member = RoomMembership(user_id=user_id, room_id=room_id)
+        session.add(new_member)
+        session.flush()
+
+        return {
+            "id": str(new_member.id),
+            "user_id": str(new_member.user_id),
+            "room_id": str(new_member.room_id),
+        }
+    else:
+        HTTPForbidden()
 
 
 @view_config(
