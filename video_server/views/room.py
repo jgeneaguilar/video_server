@@ -1,9 +1,9 @@
-from pyramid.view import view_config
-from pyramid.httpexceptions import HTTPFound, HTTPNotFound, HTTPForbidden
-from sqlalchemy import func
+from pyramid.view import view_config, forbidden_view_config
+from pyramid.httpexceptions import exception_response
 
 from ..models import Room, RoomMembership, User
 from ..services import encoding
+
 
 # Room public views
 @view_config(
@@ -51,11 +51,33 @@ def create_room(request):
 
 
 @view_config(
-    route_name="change_host", request_method="PUT", renderer="json", permission="auth",
+    route_name="change_host",
+    request_method="PATCH",
+    renderer="json",
+    permission="auth",
 )
 def change_host(request):
-    """Changes the room host. Current user must be a host"""
-    pass
+    """
+        Changes the room host. Current user must be a host
+
+        params:
+            new_host_id: string (uuid)
+
+        auth user from request
+        room id from request url
+    """
+    user_id = request.authenticated_userid
+    room_id = request.matchdict["room_id"]
+    new_host_id = request.json_body.get("new_host_id")
+
+    session = request.dbsession
+    room = session.query(Room).filter_by(id=room_id).first()
+
+    if user_id == str(room.host_id):
+        room.host_id = new_host_id
+        return encoding.encode_room(room)
+    else:
+        raise exception_response(403)
 
 
 @view_config(
@@ -87,7 +109,7 @@ def join_room(request):
             "room_id": str(new_member.room_id),
         }
     else:
-        HTTPForbidden()
+        raise exception_response(403)
 
 
 @view_config(
