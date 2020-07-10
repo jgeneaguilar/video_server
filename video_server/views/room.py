@@ -29,21 +29,19 @@ def get_room_info(request):
         raise exception_response(404)
 
 
-# members = [
-#        str(i[0])
-#        for i in session.query(User.id)
-#        .join(RoomMembership)
-#        .filter(RoomMembership.room_id == room_id)
-#        .all()
-#    ]
-
-
 @view_config(
     route_name="get_user_rooms", request_method="GET", renderer="json",
 )
 def get_rooms_by_username(request):
     """Retrieves a list of rooms a user is in"""
-    pass
+    username = request.matchdict["username"]
+
+    user = request.dbsession.query(User).filter_by(username=username).first()
+    if user is not None:
+        rooms = [{"id": str(room.id), "name": room.name} for room in user.rooms]
+        return rooms
+    else:
+        raise exception_response(404)
 
 
 # Room auth views
