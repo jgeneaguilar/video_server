@@ -1,4 +1,4 @@
-from pyramid.view import view_config, forbidden_view_config
+from pyramid.view import view_config
 from pyramid.httpexceptions import exception_response
 
 from ..models import Room, RoomMembership, User
@@ -10,12 +10,9 @@ from ..services import encoding
     route_name="get_room_info", request_method="GET", renderer="json",
 )
 def get_room_info(request):
-    """
-    Retrieves information about a room:
-        - room name
-        - host name
-        - capacity
-        - list of members
+    """Retrieve information about a room.
+        Return:
+            dict of id(uuid), name(string), host_id(uuid), capacity(int), members(list)
     """
     room_id = request.matchdict["room_id"]
     room = request.dbsession.query(Room).filter(Room.id == room_id).first()
@@ -33,7 +30,10 @@ def get_room_info(request):
     route_name="get_user_rooms", request_method="GET", renderer="json",
 )
 def get_rooms_by_username(request):
-    """Retrieves a list of rooms a user is in"""
+    """Retrieve a list of rooms a user is in.
+        Return:
+            list of dict{ id(uuid), name(string) }
+    """
     username = request.matchdict["username"]
 
     user = request.dbsession.query(User).filter_by(username=username).first()
@@ -49,7 +49,13 @@ def get_rooms_by_username(request):
     route_name="create_room", request_method="POST", renderer="json", permission="auth",
 )
 def create_room(request):
-    """Creates a room for an authenticated user and set user as the host"""
+    """Create a room for an authenticated user and set user as the host.
+        Params:
+            name: string
+            capacity: int (optional)
+        Return:
+            dict of id(uuid), name(string), host_id(uuid), capacity(int)
+    """
     user_id = request.authenticated_userid
     name = request.json_body.get("name")
     capacity = request.json_body.get("capacity")  # 5 as default
@@ -74,14 +80,11 @@ def create_room(request):
     permission="auth",
 )
 def change_host(request):
-    """
-        Changes the room host. Current user must be a host
-
-        params:
+    """Change the room host. Current user must be a host.
+        Params:
             new_host_id: string (uuid)
-
-        auth user from request
-        room id from request url
+        Return:
+            dict of id(uuid), name(string), host_id(uuid), capacity(int)
     """
     user_id = request.authenticated_userid
     room_id = request.matchdict["room_id"]
@@ -101,7 +104,7 @@ def change_host(request):
     route_name="join_room", request_method="POST", renderer="json", permission="auth",
 )
 def join_room(request):
-    """Enables the user to join a room if still within room capacity and user is not already a member"""
+    """Enable the user to join a room if still within room capacity and if user is not already a member."""
     user_id = request.authenticated_userid
     room_id = request.matchdict["room_id"]
 
@@ -136,7 +139,7 @@ def join_room(request):
     permission="auth",
 )
 def leave_room(request):
-    """Removes the user from the room"""
+    """Delete the user membership record."""
     user_id = request.authenticated_userid
     room_id = request.matchdict["room_id"]
 

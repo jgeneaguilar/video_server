@@ -3,8 +3,6 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import configure_mappers
 import zope.sqlalchemy
 
-# import or define all models here to ensure they are attached to the
-# Base.metadata prior to any initialization routines
 from .user import User  # flake8: noqa
 from .room import Room  # flake8: noqa
 from .room_membership import RoomMembership  # flake8: noqa

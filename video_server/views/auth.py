@@ -20,7 +20,13 @@ def _authenticate_user(request):
     route_name="login", request_method="POST", renderer="json",
 )
 def login(request):
-    """Authenticates the user by checking the username-password combination"""
+    """Authenticate the user by checking the username-password combination.
+        Params:
+            username: string
+            password: string
+        Return:
+            dict of id(uuid), username(string), token(jwt)
+    """
     user = _authenticate_user(request)
 
     if user is not None:

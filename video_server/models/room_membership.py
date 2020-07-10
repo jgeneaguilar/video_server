@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, DateTime, ForeignKey
+from sqlalchemy import Column, DateTime, ForeignKey
 from sqlalchemy.sql.expression import func
 from sqlalchemy.dialects.postgresql import UUID
 import uuid
@@ -7,7 +7,7 @@ from .meta import Base
 
 
 class RoomMembership(Base):
-    """An association table for rooms and users"""
+    """An association object for rooms and users."""
 
     __tablename__ = "room_memberships"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)

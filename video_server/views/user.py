@@ -10,7 +10,7 @@ from ..services import encoding
     route_name="users", request_method="GET", renderer="json",
 )
 def get_all_users(request):
-    """Retrieves all registered users"""
+    """Retrieve a list all registered users."""
     users = request.dbsession.query(User.id, User.username).all()
     user_list = [encoding.encode_user(user) for user in users]
     return user_list
@@ -20,7 +20,7 @@ def get_all_users(request):
     route_name="user", request_method="GET", renderer="json",
 )
 def get_user_by_username(request):
-    """Retrieves a user by its username"""
+    """Retrieve a user's information by its username."""
     username = request.matchdict["username"]
     user = request.dbsession.query(User).filter_by(username=username).first()
     return encoding.encode_user(user)
@@ -30,7 +30,14 @@ def get_user_by_username(request):
     route_name="create_user", request_method="POST", renderer="json",
 )
 def create_user(request):
-    """Creates a new user and authenticates session"""
+    """Create a new user and authenticate session.
+        Params:
+            username: string
+            password: string
+            mobile_token: string (optional)
+        Return:
+            dict of id(uuid), username(string), token(jwt)
+    """
     username = request.json_body.get("username")
     password = request.json_body.get("password")
     mobile_token = request.json_body.get("mobile_token", "")
@@ -50,9 +57,8 @@ def create_user(request):
     permission="auth",
 )
 def update_user(request):
-    """
-        Changes an authenticated user's password and/or mobile_token
-        params:
+    """Change an authenticated user's password and/or mobile_token.
+        Params:
             password: string
             mobile_token: string (optional)
     """
@@ -81,7 +87,7 @@ def update_user(request):
     permission="auth",
 )
 def delete_user(request):
-    """Deletes an authenticated user's account"""
+    """Delete an authenticated user's account."""
     user_id = request.authenticated_userid
 
     session = request.dbsession
