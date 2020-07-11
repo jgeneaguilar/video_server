@@ -3,6 +3,7 @@ from alembic import context
 from pyramid.paster import get_appsettings, setup_logging
 from sqlalchemy import engine_from_config
 
+import os
 from video_server.models.meta import Base
 
 config = context.config
@@ -10,6 +11,7 @@ config = context.config
 setup_logging(config.config_file_name)
 
 settings = get_appsettings(config.config_file_name)
+settings["sqlalchemy.url"] = os.getenv("DATABASE_URL")
 target_metadata = Base.metadata
 
 
