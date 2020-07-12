@@ -1,5 +1,5 @@
-from pyramid.view import forbidden_view_config, view_config
-from pyramid.httpexceptions import HTTPUnauthorized, exception_response
+from pyramid.view import view_config
+from pyramid.httpexceptions import HTTPBadRequest, HTTPNotFound
 
 from ..models import User
 from ..services import encoding
@@ -10,8 +10,11 @@ def _authenticate_user(request):
     password = request.json_body.get("password")
     user = request.dbsession.query(User).filter_by(username=username).first()
 
-    if user is not None and user.check_password(password):
-        return user
+    if user is not None:
+        if user.check_password(password):
+            return user
+        else:
+            raise HTTPBadRequest("The password you have entered is incorrect.")
     else:
         return None
 
@@ -32,4 +35,4 @@ def login(request):
     if user is not None:
         return encoding.encode_response_token(user, request)
     else:
-        raise HTTPUnauthorized()
+        raise HTTPNotFound()

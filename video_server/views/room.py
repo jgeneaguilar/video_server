@@ -1,5 +1,5 @@
 from pyramid.view import view_config
-from pyramid.httpexceptions import exception_response
+from pyramid.httpexceptions import HTTPForbidden, HTTPNotFound, HTTPBadRequest
 
 from ..models import Room, RoomMembership, User
 from ..services import encoding
@@ -7,7 +7,7 @@ from ..services import encoding
 
 # Room public views
 @view_config(
-    route_name="get_room_info", request_method="GET", renderer="json",
+    route_name="room", request_method="GET", renderer="json",
 )
 def get_room_info(request):
     """Retrieve information about a room.
@@ -23,30 +23,12 @@ def get_room_info(request):
 
         return room_info
     else:
-        raise exception_response(404)
-
-
-@view_config(
-    route_name="get_user_rooms", request_method="GET", renderer="json",
-)
-def get_rooms_by_username(request):
-    """Retrieve a list of rooms a user is in.
-        Return:
-            list of dict{ id(uuid), name(string) }
-    """
-    username = request.matchdict["username"]
-
-    user = request.dbsession.query(User).filter_by(username=username).first()
-    if user is not None:
-        rooms = [{"id": str(room.id), "name": room.name} for room in user.rooms]
-        return rooms
-    else:
-        raise exception_response(404)
+        raise HTTPNotFound()
 
 
 # Room auth views
 @view_config(
-    route_name="create_room", request_method="POST", renderer="json", permission="auth",
+    route_name="rooms", request_method="POST", renderer="json", permission="auth",
 )
 def create_room(request):
     """Create a room for an authenticated user and set user as the host.
@@ -59,6 +41,12 @@ def create_room(request):
     user_id = request.authenticated_userid
     name = request.json_body.get("name")
     capacity = request.json_body.get("capacity")  # 5 as default
+
+    if capacity is not None:
+        if capacity < 2:
+            raise HTTPBadRequest("Room capacity must be at least 2.")
+        if capacity >= 50:
+            raise HTTPBadRequest("Maximum room capacity is 50.")
 
     session = request.dbsession
     new_room = Room(name=name, capacity=capacity, host_id=user_id)
@@ -74,10 +62,7 @@ def create_room(request):
 
 
 @view_config(
-    route_name="change_host",
-    request_method="PATCH",
-    renderer="json",
-    permission="auth",
+    route_name="host", request_method="PATCH", renderer="json", permission="auth",
 )
 def change_host(request):
     """Change the room host. Current user must be a host.
@@ -88,20 +73,42 @@ def change_host(request):
     """
     user_id = request.authenticated_userid
     room_id = request.matchdict["room_id"]
-    new_host_id = request.json_body.get("new_host_id")
+    request.json = request.json_body or {}
+    new_host_id = request.json.get("new_host_id")
+    if new_host_id is None:
+        raise HTTPNotFound("Please enter a valid new host id.")
 
     session = request.dbsession
     room = session.query(Room).filter_by(id=room_id).first()
+    # check if new_host is a member of the room
+    new_host_membership_id = (
+        session.query(RoomMembership.user_id)
+        .filter(
+            RoomMembership.user_id == new_host_id, RoomMembership.room_id == room_id
+        )
+        .scalar()
+    )
 
-    if user_id == str(room.host_id):
-        room.host_id = new_host_id
-        return encoding.encode_room(room)
-    else:
-        raise exception_response(403)
+    if room is None:
+        raise HTTPNotFound("The room cannot be found.")
+    if new_host_membership_id is None:
+        raise HTTPNotFound("Please enter a valid user as host.")
+
+    if new_host_membership_id is not None and room is not None:
+        if user_id == new_host_membership_id:
+            raise HTTPForbidden("Current user is already the host.")
+        if user_id == str(room.host_id):
+            room.host_id = new_host_membership_id
+            return encoding.encode_room(room)
+        else:
+            raise HTTPForbidden("Current user is not the host.")
 
 
 @view_config(
-    route_name="join_room", request_method="POST", renderer="json", permission="auth",
+    route_name="room_members",
+    request_method="POST",
+    renderer="json",
+    permission="auth",
 )
 def join_room(request):
     """Enable the user to join a room if still within room capacity and if user is not already a member."""
@@ -128,12 +135,14 @@ def join_room(request):
             "user_id": str(new_member.user_id),
             "room_id": str(new_member.room_id),
         }
-    else:
-        raise exception_response(403)
+    elif user_id in members:
+        raise HTTPForbidden("You have already joined the room.")
+    elif not len(members) < room_capacity:
+        raise HTTPForbidden("The room is already full.")
 
 
 @view_config(
-    route_name="leave_room",
+    route_name="room_members",
     request_method="DELETE",
     renderer="json",
     permission="auth",
@@ -144,10 +153,14 @@ def leave_room(request):
     room_id = request.matchdict["room_id"]
 
     session = request.dbsession
-    room_membership = session.query(RoomMembership).filter_by(room_id=room_id).first()
+    room_membership = (
+        session.query(RoomMembership)
+        .filter(RoomMembership.room_id == room_id, RoomMembership.user_id == user_id)
+        .first()
+    )
 
-    if room_membership is not None and user_id == str(room_membership.user_id):
+    if room_membership is not None:
         session.delete(room_membership)
         return "Success"
     else:
-        raise exception_response(403)
+        raise HTTPNotFound("You have not joined this room.")

@@ -1,5 +1,5 @@
 from pyramid.view import view_config
-from pyramid.httpexceptions import exception_response
+from pyramid.httpexceptions import HTTPBadRequest, HTTPNotFound
 
 from ..models import User
 from ..services import encoding
@@ -9,25 +9,25 @@ from ..services import encoding
 @view_config(
     route_name="users", request_method="GET", renderer="json",
 )
-def get_all_users(request):
-    """Retrieve a list all registered users."""
-    users = request.dbsession.query(User.id, User.username).all()
-    user_list = [encoding.encode_user(user) for user in users]
-    return user_list
+def get_users(request):
+    """Retrieve a list all registered users or one user if username is in url query string."""
+    username_query = request.GET.get("username")
+    session = request.dbsession
+
+    if username_query is not None:
+        user = session.query(User).filter_by(username=username_query).first()
+        if user is not None:
+            return encoding.encode_user(user)
+        else:
+            raise HTTPNotFound()
+    else:
+        users = request.dbsession.query(User.id, User.username).all()
+        user_list = [encoding.encode_user(user) for user in users]
+        return user_list
 
 
 @view_config(
-    route_name="user", request_method="GET", renderer="json",
-)
-def get_user_by_username(request):
-    """Retrieve a user's information by its username."""
-    username = request.matchdict["username"]
-    user = request.dbsession.query(User).filter_by(username=username).first()
-    return encoding.encode_user(user)
-
-
-@view_config(
-    route_name="create_user", request_method="POST", renderer="json",
+    route_name="users", request_method="POST", renderer="json",
 )
 def create_user(request):
     """Create a new user and authenticate session.
@@ -43,6 +43,11 @@ def create_user(request):
     mobile_token = request.json_body.get("mobile_token", "")
 
     session = request.dbsession
+    username_exist = session.query(User).filter_by(username=username).first()
+
+    if username_exist is not None:
+        raise HTTPBadRequest("The username already exists.")
+
     new_user = User(username=username, password=password, mobile_token=mobile_token)
     session.add(new_user)
     session.flush()
@@ -51,10 +56,7 @@ def create_user(request):
 
 # User auth views
 @view_config(
-    route_name="update_user",
-    request_method="PATCH",
-    renderer="json",
-    permission="auth",
+    route_name="user_me", request_method="PATCH", renderer="json", permission="auth",
 )
 def update_user(request):
     """Change an authenticated user's password and/or mobile_token.
@@ -69,22 +71,20 @@ def update_user(request):
     user = request.dbsession.query(User).filter_by(id=user_id).first()
 
     if user is None:
-        raise exception_response(404)
-    if password is not None and mobile_token is not None:
-        # check if password param is not the same
+        raise HTTPNotFound()
+    if password is not None:
         if not user.check_password(password):
+            # check if password param is not the same
             user.set_password(password)
         else:
-            raise exception_response(400)
+            raise HTTPBadRequest("You cannot use the same password.")
+    if mobile_token is not None:
         user.mobile_token = mobile_token
-        return "Success"
+    return "Success"
 
 
 @view_config(
-    route_name="delete_user",
-    request_method="DELETE",
-    renderer="json",
-    permission="auth",
+    route_name="user_me", request_method="DELETE", renderer="json", permission="auth",
 )
 def delete_user(request):
     """Delete an authenticated user's account."""
@@ -96,4 +96,30 @@ def delete_user(request):
         session.delete(user)
         return "Success"
     else:
-        raise exception_response(404)
+        raise HTTPNotFound()
+
+
+@view_config(
+    route_name="user_rooms", request_method="GET", renderer="json",
+)
+def get_rooms_by_username(request):
+    """Retrieve a list of rooms a user is in.
+        Return:
+            list of dict{ id(uuid), name(string) }
+    """
+    username = request.matchdict["username"]
+
+    user = request.dbsession.query(User).filter_by(username=username).first()
+
+    if user is not None:
+        rooms = [
+            encoding.encode_room(
+                room,
+                is_host=room.host_id == user.id,
+                members=[encoding.encode_user(user) for user in room.users],
+            )
+            for room in user.rooms
+        ]
+        return rooms
+    else:
+        raise HTTPNotFound()
