@@ -81,6 +81,19 @@ def create_user(request):
 
 # User auth views
 @view_config(
+    route_name="user_me", request_method="GET", renderer="json", permission="auth"
+)
+def get_me(request):
+    """Retrieve the authenticated user's info"""
+    user_id = request.authenticated_userid
+    user = request.dbsession.query(User).filter_by(id=user_id).first()
+
+    if user is None:
+        raise HTTPNotFound()
+    return {"data": encoding.encode_user(user)}
+
+
+@view_config(
     route_name="user_me", request_method="PATCH", renderer="json", permission="auth",
 )
 def update_user(request):
