@@ -33,6 +33,6 @@ def login(request):
     user = _authenticate_user(request)
 
     if user is not None:
-        return encoding.encode_response_token(user, request)
+        return {"data": encoding.encode_response_token(user, request)}
     else:
         raise HTTPNotFound()
