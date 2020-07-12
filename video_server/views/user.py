@@ -1,29 +1,54 @@
 from pyramid.view import view_config
 from pyramid.httpexceptions import HTTPBadRequest, HTTPNotFound
+from paginate_sqlalchemy import SqlalchemyOrmPage
+from sqlalchemy import desc, asc
 
 from ..models import User
 from ..services import encoding
 
 
 # User public views
+from ..services.helpers import to_int
+
+
 @view_config(
     route_name="users", request_method="GET", renderer="json",
 )
 def get_users(request):
     """Retrieve a list all registered users or one user if username is in url query string."""
     username_query = request.GET.get("username")
+
+    page = to_int(request.GET.get("page"), 1)
+    limit = to_int(request.GET.get("limit"), 10)
+    sort = request.GET.get("sort", "created_at")
+    sort_order = request.GET.get("sort_order")
+
     session = request.dbsession
 
     if username_query is not None:
         user = session.query(User).filter_by(username=username_query).first()
         if user is not None:
-            return encoding.encode_user(user)
+            # enclosed in an array for return data consistency
+            return {"data": [encoding.encode_user(user)]}
         else:
             raise HTTPNotFound()
     else:
-        users = request.dbsession.query(User.id, User.username).all()
-        user_list = [encoding.encode_user(user) for user in users]
-        return user_list
+        query = session.query(User)
+
+        # Sorting
+        try:
+            if sort is not None:
+                order = desc if sort_order == "desc" else asc
+                query = query.order_by(order(getattr(User, sort)))
+        except AttributeError:
+            raise HTTPBadRequest("Invalid sort params")
+
+        # Paging
+        page = SqlalchemyOrmPage(
+            query, page=page, items_per_page=limit, db_session=session
+        )
+        users = [encoding.encode_user(user) for user in page.items]
+        return {"data": users, "total": page.item_count}
 
 
 @view_config(
@@ -51,7 +76,7 @@ def create_user(request):
     new_user = User(username=username, password=password, mobile_token=mobile_token)
     session.add(new_user)
     session.flush()
-    return encoding.encode_response_token(new_user, request)
+    return {"data": encoding.encode_response_token(new_user, request)}
 
 
 # User auth views
@@ -120,6 +145,6 @@ def get_rooms_by_username(request):
             )
             for room in user.rooms
         ]
-        return rooms
+        return {"data": rooms}
     else:
         raise HTTPNotFound()
